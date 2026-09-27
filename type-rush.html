@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TYPE RUSH</title>
+<style>
+:root{
+  --bg:#0b0d14; --panel:#12151fcc; --border:#232838; --text:#e7ebf5; --dim:#7a8299;
+  --lime:#c8ff3d; --pink:#ff4d8d; --blue:#4dc3ff;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(circle at 15% 0%,#1a2036 0%,transparent 45%),radial-gradient(circle at 100% 20%,#241629 0%,transparent 40%),var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100%;padding-bottom:76px}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px 40px}
+header.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:8px}
+.brand{font-size:1.5rem;font-weight:800;letter-spacing:1px;color:var(--lime);text-shadow:0 0 12px #c8ff3d55}
+.streak{color:var(--pink);font-size:.9rem;font-weight:600}
+.tabs{display:flex;gap:6px;margin-bottom:18px;overflow-x:auto}
+.tab{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#0e1119;color:var(--dim);cursor:pointer;white-space:nowrap;font-size:.85rem}
+.tab.active{color:var(--lime);border-color:var(--lime);box-shadow:0 0 10px #c8ff3d33}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;backdrop-filter:blur(6px)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:#0d101a;border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.stat .v{font-size:1.5rem;color:var(--lime);font-weight:700}
+.stat .l{font-size:.68rem;color:var(--dim);letter-spacing:.5px;margin-top:4px}
+.bar{height:10px;border-radius:6px;background:#0d101a;overflow:hidden;border:1px solid var(--border)}
+.bar>div{height:100%;background:linear-gradient(90deg,var(--lime),var(--blue));box-shadow:0 0 8px #c8ff3daa;transition:width .4s}
+button{background:linear-gradient(135deg,var(--lime),var(--blue));border:none;color:#04101a;font-weight:700;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:.9rem}
+button.ghost{background:none;border:1px solid var(--border);color:var(--text)}
+select{background:#0d101a;border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-size:.85rem}
+.center{text-align:center}
+.practice-text{font-size:1.4rem;line-height:1.9;font-family:'Consolas',monospace;letter-spacing:.5px;padding:20px;background:#0d101a;border-radius:12px;border:1px solid var(--border);min-height:120px}
+.ch{color:var(--dim)}
+.ch.correct{color:var(--lime)}
+.ch.wrong{color:var(--pink);text-decoration:underline}
+.ch.current{background:#c8ff3d33;border-radius:3px}
+.hiddenInput{position:absolute;opacity:0;pointer-events:none}
+.live-stats{display:flex;gap:20px;justify-content:center;margin:14px 0;flex-wrap:wrap}
+.live-stats div{text-align:center}
+.live-stats .v{font-size:1.6rem;color:var(--blue);font-weight:700}
+.live-stats .l{font-size:.7rem;color:var(--dim)}
+.modes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.modes button{background:#0d101a;color:var(--dim);border:1px solid var(--border)}
+.modes button.sel{background:linear-gradient(135deg,var(--lime),var(--blue));color:#04101a;border-color:transparent}
+.ach{display:flex;gap:10px;align-items:center;padding:10px;border-radius:10px;border:1px solid var(--border);margin-bottom:8px}
+.ach.locked{opacity:.35}
+.ach .icon{font-size:1.4rem}
+.bottomnav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;background:#0b0d14ee;border-top:1px solid var(--border);padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));backdrop-filter:blur(8px)}
+.bottomnav div{color:var(--dim);font-size:.68rem;text-align:center;cursor:pointer}
+.bottomnav div.active{color:var(--lime)}
+.hidden{display:none}
+.result{font-size:1.1rem;margin-top:10px;color:var(--lime)}
+.mobile-note{display:none;color:var(--dim);font-size:.75rem;margin-top:8px}
+@media(max-width:600px){.mobile-note{display:block}.practice-text{font-size:1.1rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">TYPE RUSH ⚡</div>
+    <div class="streak" id="streakDisplay">🔥 0 Day Streak</div>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-view="dashboard">🏠 Dashboard</div>
+    <div class="tab" data-view="practice">⌨️ Practice</div>
+    <div class="tab" data-view="achievements">🏆 Achievements</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <section id="view-dashboard">
+    <div class="grid">
+      <div class="stat"><div class="v" id="dBestWpm">0</div><div class="l">BEST WPM</div></div>
+      <div class="stat"><div class="v" id="dAcc">100%</div><div class="l">BEST ACCURACY</div></div>
+      <div class="stat"><div class="v" id="dLevel">1</div><div class="l">LEVEL</div></div>
+      <div class="stat"><div class="v" id="dXP">0</div><div class="l">XP</div></div>
+    </div>
+    <div class="panel">
+      <h3 style="margin-bottom:8px;font-size:.9rem;color:var(--dim)">LEVEL PROGRESS</h3>
+      <div class="bar"><div id="levelBar" style="width:0%"></div></div>
+      <div class="center" style="margin-top:16px"><button onclick="showView('practice')">START PRACTICE</button></div>
+    </div>
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;color:var(--dim);font-size:.85rem">
+        <span>Sessions completed: <b id="dSessions" style="color:var(--text)">0</b></span>
+        <span>Total practice time: <b id="dTime" style="color:var(--text)">0m</b></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRACTICE -->
+  <section id="view-practice" class="hidden">
+    <div class="panel">
+      <div class="modes" id="modeButtons">
+        <button data-mode="30" class="sel">30 sec</button>
+        <button data-mode="60">1 min</button>
+        <button data-mode="180">3 min</button>
+      </div>
+      <div class="practice-text" id="practiceText" tabindex="0"></div>
+      <input class="hiddenInput" id="hiddenInput" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="live-stats">
+        <div><div class="v" id="liveWpm">0</div><div class="l">WPM</div></div>
+        <div><div class="v" id="liveAcc">100%</div><div class="l">ACCURACY</div></div>
+        <div><div class="v" id="liveTime">0</div><div class="l">SEC LEFT</div></div>
+      </div>
+      <div class="center">
+        <button class="ghost" onclick="startPractice()">Restart</button>
+      </div>
+      <div class="result hidden" id="resultBox"></div>
+      <div class="mobile-note">💡 For serious practice, an external keyboard is recommended on mobile.</div>
+    </div>
+  </section>
+
+  <!-- ACHIEVEMENTS -->
+  <section id="view-achievements" class="hidden">
+    <div class="panel" id="achList"></div>
+  </section>
+</div>
+
+<div class="bottomnav" id="bottomnav">
+  <div class="active" data-view="dashboard">🏠<br>Dashboard</div>
+  <div data-view="practice">⌨️<br>Practice</div>
+  <div data-view="achievements">🏆<br>Achievements</div>
+</div>
+
+<script>
+const WORDS = ["the","quick","brown","fox","jumps","over","lazy","dog","time","world","people","water","light","music","happy","great","learn","speed","focus","practice","keyboard","finger","accuracy","level","system","project","language","future","design","simple","code","build","strong","bright","travel","dream","story","value","change","power","field","action","moment","reason","result","effort","growth","skill","habit","progress"];
+
+const DEFAULT_STATE = {
+  xp:0, level:1, bestWpm:0, bestAcc:100, streak:0, lastPracticeDate:null,
+  sessions:0, totalSeconds:0
+};
+let state;
+try{
+  const saved = localStorage.getItem('typeRushState');
+  state = saved ? JSON.parse(saved) : structuredClone(DEFAULT_STATE);
+}catch(e){ state = structuredClone(DEFAULT_STATE); }
+
+function save(){ try{ localStorage.setItem('typeRushState', JSON.stringify(state)); }catch(e){} }
+function xpForLevel(l){ return l*150; }
+
+function addXP(n){
+  state.xp += n;
+  while(state.xp >= xpForLevel(state.level)){ state.xp -= xpForLevel(state.level); state.level++; }
+  save();
+}
+
+function checkStreak(){
+  const t = new Date().toDateString();
+  if(state.lastPracticeDate === t) return;
+  const y = new Date(); y.setDate(y.getDate()-1);
+  state.streak = (state.lastPracticeDate === y.toDateString()) ? state.streak+1 : 1;
+  state.lastPracticeDate = t;
+  save();
+}
+
+function renderDashboard(){
+  document.getElementById('dBestWpm').textContent = state.bestWpm;
+  document.getElementById('dAcc').textContent = state.bestAcc + '%';
+  document.getElementById('dLevel').textContent = state.level;
+  document.getElementById('dXP').textContent = state.xp;
+  document.getElementById('levelBar').style.width = Math.round(state.xp/xpForLevel(state.level)*100) + '%';
+  document.getElementById('dSessions').textContent = state.sessions;
+  document.getElementById('dTime').textContent = Math.round(state.totalSeconds/60) + 'm';
+  document.getElementById('streakDisplay').textContent = '🔥 ' + state.streak + ' Day Streak';
+}
+
+const ACHIEVEMENTS = [
+  {id:'first', icon:'🔥', name:'First Step', desc:'Complete your first session.', test:s=>s.sessions>=1},
+  {id:'speed50', icon:'⚡', name:'Speedster', desc:'Reach 50 WPM.', test:s=>s.bestWpm>=50},
+  {id:'speed80', icon:'💨', name:'Fast Fingers', desc:'Reach 80 WPM.', test:s=>s.bestWpm>=80},
+  {id:'speed100', icon:'👑', name:'Typing Master', desc:'Reach 100 WPM.', test:s=>s.bestWpm>=100},
+  {id:'perfect', icon:'🎯', name:'Perfect', desc:'Achieve 100% accuracy in a session.', test:s=>s.bestAcc>=100},
+  {id:'streak7', icon:'🔥', name:'Consistent', desc:'Practice 7 days in a row.', test:s=>s.streak>=7},
+];
+function renderAchievements(){
+  const list = document.getElementById('achList');
+  list.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{
+    const unlocked = a.test(state);
+    const div = document.createElement('div');
+    div.className = 'ach' + (unlocked?'':' locked');
+    div.innerHTML = `<div class="icon">${a.icon}</div><div><div style="font-weight:600">${a.name}</div><div style="font-size:.75rem;color:var(--dim)">${a.desc}</div></div>`;
+    list.appendChild(div);
+  });
+}
+
+// ---- Practice logic ----
+let modeSeconds = 30;
+let targetWords = [];
+let typed = '';
+let startTime = null;
+let timerInterval = null;
+let sessionActive = false;
+let mistakes = 0;
+let totalTyped = 0;
+
+function genText(n){
+  const arr = [];
+  for(let i=0;i<n;i++) arr.push(WORDS[Math.floor(Math.random()*WORDS.length)]);
+  return arr.join(' ');
+}
+
+function renderPracticeText(){
+  const container = document.getElementById('practiceText');
+  container.innerHTML = '';
+  const full = targetWords;
+  for(let i=0;i<full.length;i++){
+    const span = document.createElement('span');
+    span.textContent = full[i];
+    span.className = 'ch';
+    if(i < typed.length){
+      span.className = 'ch ' + (typed[i]===full[i] ? 'correct' : 'wrong');
+    } else if(i === typed.length){
+      span.className = 'ch current';
+    }
+    container.appendChild(span);
+  }
+}
+
+function startPractice(){
+  clearInterval(timerInterval);
+  targetWords = genText(60).split('');
+  typed = '';
+  mistakes = 0; totalTyped = 0;
+  sessionActive = false; startTime = null;
+  document.getElementById('resultBox').classList.add('hidden');
+  document.getElementById('liveTime').textContent = modeSeconds;
+  document.getElementById('liveWpm').textContent = '0';
+  document.getElementById('liveAcc').textContent = '100%';
+  renderPracticeText();
+  document.getElementById('hiddenInput').value='';
+  document.getElementById('hiddenInput').focus();
+}
+
+function endSession(){
+  clearInterval(timerInterval);
+  sessionActive = false;
+  const minutes = modeSeconds/60;
+  const wpm = Math.round((typed.length/5)/minutes) || 0;
+  const acc = totalTyped ? Math.round(((totalTyped-mistakes)/totalTyped)*100) : 100;
+  state.sessions++;
+  state.totalSeconds += modeSeconds;
+  let newBest = false;
+  if(wpm > state.bestWpm){ state.bestWpm = wpm; newBest = true; }
+  if(acc > state.bestAcc || state.sessions===1) state.bestAcc = Math.max(state.bestAcc===100 && state.sessions===1?0:state.bestAcc, acc);
+  addXP(20 + Math.round(wpm/2));
+  checkStreak();
+  save();
+  renderDashboard(); renderAchievements();
+  const box = document.getElementById('resultBox');
+  box.classList.remove('hidden');
+  box.textContent = `Session complete — ${wpm} WPM, ${acc}% accuracy` + (newBest ? '  🎉 NEW PERSONAL BEST!' : '');
+}
+
+document.getElementById('hiddenInput').addEventListener('input', (e)=>{
+  if(!sessionActive){
+    sessionActive = true; startTime = Date.now();
+    let timeLeft = modeSeconds;
+    timerInterval = setInterval(()=>{
+      timeLeft--;
+      document.getElementById('liveTime').textContent = timeLeft;
+      const elapsedMin = (modeSeconds-timeLeft)/60 || 1/60;
+      const wpm = Math.round((typed.length/5)/elapsedMin) || 0;
+      document.getElementById('liveWpm').textContent = wpm;
+      if(timeLeft<=0) endSession();
+    },1000);
+  }
+  const val = e.target.value;
+  if(val.length > typed.length){
+    const idx = typed.length;
+    totalTyped++;
+    if(targetWords[idx] !== val[idx]) mistakes++;
+  }
+  typed = val;
+  const acc = totalTyped ? Math.round(((totalTyped-mistakes)/totalTyped)*100) : 100;
+  document.getElementById('liveAcc').textContent = acc + '%';
+  renderPracticeText();
+  if(typed.length >= targetWords.length) endSession();
+});
+
+document.getElementById('practiceText').addEventListener('click', ()=> document.getElementById('hiddenInput').focus());
+
+document.getElementById('modeButtons').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#modeButtons button').forEach(x=>x.classList.remove('sel'));
+  b.classList.add('sel');
+  modeSeconds = Number(b.dataset.mode);
+  startPractice();
+});
+
+// ---- Nav ----
+function showView(v){
+  document.querySelectorAll('[id^=view-]').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('view-'+v).classList.remove('hidden');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===v));
+  document.querySelectorAll('#bottomnav div').forEach(t=>t.classList.toggle('active', t.dataset.view===v));
+  if(v==='practice') startPractice();
+}
+document.getElementById('tabs').addEventListener('click', e=>{
+  const t = e.target.closest('.tab'); if(t) showView(t.dataset.view);
+});
+document.getElementById('bottomnav').addEventListener('click', e=>{
+  const t = e.target.closest('div[data-view]'); if(t) showView(t.dataset.view);
+});
+
+renderDashboard();
+renderAchievements();
+</script>
+</body>
+</html>
